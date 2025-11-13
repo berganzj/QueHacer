@@ -14,10 +14,23 @@ struct PersistenceController {
     static let preview: PersistenceController = {
         let result = PersistenceController(inMemory: true)
         let viewContext = result.container.viewContext
-        for _ in 0..<10 {
+        
+        // Create sample activities for preview
+        let sampleActivities = [
+            "Review quarterly reports",
+            "Call dentist for appointment",
+            "Grocery shopping",
+            "Exercise for 30 minutes",
+            "Read chapter 5"
+        ]
+        
+        for (index, activity) in sampleActivities.enumerated() {
             let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
+            newItem.activityDescription = activity
+            newItem.isCompleted = index % 2 == 0 // Make some completed for demo
+            newItem.createdDate = Date()
         }
+        
         do {
             try viewContext.save()
         } catch {
