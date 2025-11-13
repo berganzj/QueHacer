@@ -3,6 +3,7 @@
 //  QueHacer
 //
 //  Created by Jberg on 2025-11-10.
+//  Updated by Jberg on 2025-11-12.
 //
 
 import SwiftUI
