@@ -13,6 +13,7 @@ struct ContentView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @State private var newActivityText = ""
     @State private var showingAddActivity = false
+    @State private var editingActivity: Item? = nil
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Item.createdDate, ascending: true)],
@@ -21,6 +22,11 @@ struct ContentView: View {
                               Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date()))! as NSDate),
         animation: .default)
     private var todaysActivities: FetchedResults<Item>
+    
+    // Computed property to check if there are completed activities
+    private var hasCompletedActivities: Bool {
+        todaysActivities.contains { $0.isCompleted }
+    }
 
     var body: some View {
         NavigationView {
@@ -62,10 +68,21 @@ struct ContentView: View {
                                 Text(activity.activityDescription ?? "Unknown Activity")
                                     .strikethrough(activity.isCompleted)
                                     .foregroundColor(activity.isCompleted ? .secondary : .primary)
+                                    .onTapGesture {
+                                        editingActivity = activity
+                                    }
                                 
                                 Spacer()
                             }
                             .padding(.vertical, 4)
+                            .contextMenu {
+                                Button("Edit") {
+                                    editingActivity = activity
+                                }
+                                Button("Delete", role: .destructive) {
+                                    deleteActivity(activity)
+                                }
+                            }
                         }
                         .onDelete(perform: deleteActivities)
                     }
@@ -74,10 +91,18 @@ struct ContentView: View {
             .navigationTitle("Today's Activities")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingAddActivity = true
-                    }) {
-                        Label("Add Activity", systemImage: "plus")
+                    HStack {
+                        if hasCompletedActivities {
+                            Button(action: clearCompletedActivities) {
+                                Label("Clear Finished", systemImage: "trash")
+                            }
+                        }
+                        
+                        Button(action: {
+                            showingAddActivity = true
+                        }) {
+                            Label("Add Activity", systemImage: "plus")
+                        }
                     }
                 }
                 
@@ -90,6 +115,13 @@ struct ContentView: View {
             .sheet(isPresented: $showingAddActivity) {
                 AddActivityView(isPresented: $showingAddActivity)
                     .environment(\.managedObjectContext, viewContext)
+            }
+            .sheet(item: $editingActivity) { activity in
+                EditActivityView(activity: activity, isPresented: .init(
+                    get: { editingActivity != nil },
+                    set: { _ in editingActivity = nil }
+                ))
+                .environment(\.managedObjectContext, viewContext)
             }
         }
     }
@@ -106,6 +138,33 @@ struct ContentView: View {
             }
         }
     }
+    
+    private func clearCompletedActivities() {
+        withAnimation {
+            let completedActivities = todaysActivities.filter { $0.isCompleted }
+            completedActivities.forEach(viewContext.delete)
+
+            do {
+                try viewContext.save()
+            } catch {
+                let nsError = error as NSError
+                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            }
+        }
+    }
+    
+    private func deleteActivity(_ activity: Item) {
+        withAnimation {
+            viewContext.delete(activity)
+            
+            do {
+                try viewContext.save()
+            } catch {
+                let nsError = error as NSError
+                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            }
+        }
+    }
 
     private func deleteActivities(offsets: IndexSet) {
         withAnimation {
@@ -113,6 +172,71 @@ struct ContentView: View {
 
             do {
                 try viewContext.save()
+            } catch {
+                let nsError = error as NSError
+                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+            }
+        }
+    }
+}
+
+struct EditActivityView: View {
+    @Environment(\.managedObjectContext) private var viewContext
+    @ObservedObject var activity: Item
+    @Binding var isPresented: Bool
+    @State private var activityText = ""
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                Text("Edit Activity")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                
+                TextField("What do you want to do?", text: $activityText)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .submitLabel(.done)
+                    .onSubmit {
+                        if !activityText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            saveChanges()
+                        }
+                    }
+                
+                Spacer()
+            }
+            .padding()
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        isPresented = false
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Save") {
+                        saveChanges()
+                    }
+                    .disabled(activityText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+            .onAppear {
+                activityText = activity.activityDescription ?? ""
+            }
+        }
+    }
+    
+    private func saveChanges() {
+        let trimmedText = activityText.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard !trimmedText.isEmpty else { return }
+        
+        withAnimation {
+            activity.activityDescription = trimmedText
+            
+            do {
+                try viewContext.save()
+                isPresented = false
             } catch {
                 let nsError = error as NSError
                 fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
