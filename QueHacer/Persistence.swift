@@ -28,7 +28,13 @@ struct PersistenceController {
             let newItem = Item(context: viewContext)
             newItem.activityDescription = activity
             newItem.isCompleted = index % 2 == 0 // Make some completed for demo
-            newItem.createdDate = Date()
+            newItem.createdDate = Calendar.current.date(byAdding: .day, value: -index, to: Date()) ?? Date()
+            newItem.isArchived = false
+            
+            // Set completion date for completed items
+            if newItem.isCompleted {
+                newItem.completedDate = newItem.createdDate
+            }
         }
         
         do {
