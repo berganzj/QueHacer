@@ -9,7 +9,7 @@
 import SwiftUI
 import CoreData
 
-struct ContentView: View {
+struct TodayView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @State private var newActivityText = ""
     @State private var showingAddActivity = false
@@ -17,7 +17,7 @@ struct ContentView: View {
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Item.createdDate, ascending: true)],
-        predicate: NSPredicate(format: "createdDate >= %@ AND createdDate < %@", 
+        predicate: NSPredicate(format: "createdDate >= %@ AND createdDate < %@ AND isArchived == NO", 
                               Calendar.current.startOfDay(for: Date()) as NSDate,
                               Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date()))! as NSDate),
         animation: .default)
@@ -130,6 +130,13 @@ struct ContentView: View {
         withAnimation {
             activity.isCompleted.toggle()
             
+            // Set completion date when completing, clear when uncompleting
+            if activity.isCompleted {
+                activity.completedDate = Date()
+            } else {
+                activity.completedDate = nil
+            }
+            
             do {
                 try viewContext.save()
             } catch {
@@ -142,7 +149,10 @@ struct ContentView: View {
     private func clearCompletedActivities() {
         withAnimation {
             let completedActivities = todaysActivities.filter { $0.isCompleted }
-            completedActivities.forEach(viewContext.delete)
+            // Archive instead of delete to preserve history
+            completedActivities.forEach { activity in
+                activity.isArchived = true
+            }
 
             do {
                 try viewContext.save()
@@ -317,5 +327,5 @@ private let itemFormatter: DateFormatter = {
 }()
 
 #Preview {
-    ContentView().environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+    TodayView().environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
 }

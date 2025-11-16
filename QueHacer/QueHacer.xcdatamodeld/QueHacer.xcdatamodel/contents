@@ -4,8 +4,10 @@
         <attribute name="activityDescription" optional="NO" attributeType="String"/>
         <attribute name="isCompleted" optional="NO" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="createdDate" optional="NO" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="completedDate" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="isArchived" optional="NO" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
     </entity>
     <elements>
-        <element name="Item" positionX="-63" positionY="-18" width="128" height="89"/>
+        <element name="Item" positionX="-63" positionY="-18" width="128" height="134"/>
     </elements>
 </model>
