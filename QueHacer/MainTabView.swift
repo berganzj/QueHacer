@@ -10,6 +10,7 @@ import CoreData
 
 struct MainTabView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @StateObject private var dayManager = DayTransitionManager.shared
     
     var body: some View {
         TabView {
@@ -24,6 +25,10 @@ struct MainTabView: View {
                 .tabItem {
                     Label("History", systemImage: "clock.arrow.circlepath")
                 }
+        }
+        .onAppear {
+            // Initialize day manager when app starts
+            print("App started on: \(dayManager.currentDayString)")
         }
     }
 }
