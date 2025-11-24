@@ -163,12 +163,8 @@ struct TodayView: View {
                 activity.completedDate = nil
             }
             
-            do {
-                try viewContext.save()
-            } catch {
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+            // Use the improved save method
+            PersistenceController.shared.save()
         }
     }
     
@@ -180,12 +176,8 @@ struct TodayView: View {
                 activity.isArchived = true
             }
 
-            do {
-                try viewContext.save()
-            } catch {
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+            // Use the improved save method
+            PersistenceController.shared.save()
         }
     }
     
@@ -193,12 +185,8 @@ struct TodayView: View {
         withAnimation {
             viewContext.delete(activity)
             
-            do {
-                try viewContext.save()
-            } catch {
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+            // Use the improved save method
+            PersistenceController.shared.save()
         }
     }
 
@@ -206,12 +194,8 @@ struct TodayView: View {
         withAnimation {
             offsets.map { todaysActivities[$0] }.forEach(viewContext.delete)
 
-            do {
-                try viewContext.save()
-            } catch {
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+            // Use the improved save method
+            PersistenceController.shared.save()
         }
     }
 }
@@ -270,13 +254,9 @@ struct EditActivityView: View {
         withAnimation {
             activity.activityDescription = trimmedText
             
-            do {
-                try viewContext.save()
-                isPresented = false
-            } catch {
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+            // Use the improved save method
+            PersistenceController.shared.save()
+            isPresented = false
         }
     }
 }
@@ -333,14 +313,11 @@ struct AddActivityView: View {
             newActivity.activityDescription = trimmedText
             newActivity.isCompleted = false
             newActivity.createdDate = Date()
+            newActivity.isArchived = false
 
-            do {
-                try viewContext.save()
-                isPresented = false
-            } catch {
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+            // Use the improved save method
+            PersistenceController.shared.save()
+            isPresented = false
         }
     }
 }
