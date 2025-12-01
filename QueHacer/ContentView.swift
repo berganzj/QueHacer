@@ -11,9 +11,11 @@ import CoreData
 
 struct TodayView: View {
     @Environment(\.managedObjectContext) private var viewContext
+    @StateObject private var dayManager = DayTransitionManager.shared
     @State private var newActivityText = ""
     @State private var showingAddActivity = false
     @State private var editingActivity: Item? = nil
+    @State private var refreshID = UUID()
 
     @FetchRequest(
         sortDescriptors: [NSSortDescriptor(keyPath: \Item.createdDate, ascending: true)],
@@ -92,6 +94,16 @@ struct TodayView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack {
+                        // Debug button for testing day transitions
+                        #if DEBUG
+                        Button(action: {
+                            dayManager.forceRefresh()
+                        }) {
+                            Image(systemName: "arrow.clockwise")
+                                .foregroundColor(.blue)
+                        }
+                        #endif
+                        
                         if hasCompletedActivities {
                             Button(action: clearCompletedActivities) {
                                 Label("Clear Finished", systemImage: "trash")
@@ -123,6 +135,20 @@ struct TodayView: View {
                 ))
                 .environment(\.managedObjectContext, viewContext)
             }
+            .id(refreshID)
+            .onReceive(dayManager.$currentDay) { _ in
+                // Refresh the view when day changes
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    refreshID = UUID()
+                }
+            }
+            .onReceive(dayManager.$shouldRefreshToday) { shouldRefresh in
+                if shouldRefresh {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        refreshID = UUID()
+                    }
+                }
+            }
         }
     }
 
@@ -137,12 +163,8 @@ struct TodayView: View {
                 activity.completedDate = nil
             }
             
-            do {
-                try viewContext.save()
-            } catch {
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+            // Use the improved save method
+            PersistenceController.shared.save()
         }
     }
     
@@ -154,12 +176,8 @@ struct TodayView: View {
                 activity.isArchived = true
             }
 
-            do {
-                try viewContext.save()
-            } catch {
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+            // Use the improved save method
+            PersistenceController.shared.save()
         }
     }
     
@@ -167,12 +185,8 @@ struct TodayView: View {
         withAnimation {
             viewContext.delete(activity)
             
-            do {
-                try viewContext.save()
-            } catch {
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+            // Use the improved save method
+            PersistenceController.shared.save()
         }
     }
 
@@ -180,12 +194,8 @@ struct TodayView: View {
         withAnimation {
             offsets.map { todaysActivities[$0] }.forEach(viewContext.delete)
 
-            do {
-                try viewContext.save()
-            } catch {
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+            // Use the improved save method
+            PersistenceController.shared.save()
         }
     }
 }
@@ -244,13 +254,9 @@ struct EditActivityView: View {
         withAnimation {
             activity.activityDescription = trimmedText
             
-            do {
-                try viewContext.save()
-                isPresented = false
-            } catch {
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+            // Use the improved save method
+            PersistenceController.shared.save()
+            isPresented = false
         }
     }
 }
@@ -307,14 +313,11 @@ struct AddActivityView: View {
             newActivity.activityDescription = trimmedText
             newActivity.isCompleted = false
             newActivity.createdDate = Date()
+            newActivity.isArchived = false
 
-            do {
-                try viewContext.save()
-                isPresented = false
-            } catch {
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
+            // Use the improved save method
+            PersistenceController.shared.save()
+            isPresented = false
         }
     }
 }
