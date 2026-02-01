@@ -47,8 +47,9 @@ class DayTransitionManager: ObservableObject {
     private func startPeriodicDayCheck() {
         // Check every 5 minutes for day changes (as a backup)
         dayChangeTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.checkForDayChange()
+            guard let self = self else { return }
+            Task { @MainActor [self] in
+                self.checkForDayChange()
             }
         }
     }
