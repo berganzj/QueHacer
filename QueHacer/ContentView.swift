@@ -32,61 +32,84 @@ struct TodayView: View {
 
     var body: some View {
         NavigationView {
-            VStack {
+            ZStack {
+                // Gradient background
+                LinearGradient(
+                    colors: [
+                        Color.blue.opacity(0.1),
+                        Color.purple.opacity(0.1),
+                        Color.pink.opacity(0.05)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
                 if todaysActivities.isEmpty {
-                    // Empty state
+                    // Empty state with glass effect
                     VStack(spacing: 20) {
-                        Image(systemName: "checkmark.circle")
-                            .font(.system(size: 60))
-                            .foregroundColor(.gray)
-                        
-                        Text("No activities for today")
-                            .font(.title2)
-                            .foregroundColor(.secondary)
-                        
-                        Text("Add your first activity to get started!")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                        
-                        Button("Add Activity") {
-                            showingAddActivity = true
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    List {
-                        ForEach(todaysActivities) { activity in
-                            HStack {
-                                Button(action: {
-                                    toggleActivityCompletion(activity)
-                                }) {
-                                    Image(systemName: activity.isCompleted ? "checkmark.circle.fill" : "circle")
-                                        .foregroundColor(activity.isCompleted ? .green : .gray)
-                                        .font(.title2)
-                                }
-                                .buttonStyle(PlainButtonStyle())
+                        Spacer()
+                        GlassContainer(cornerRadius: 20, padding: 24) {
+                            VStack(spacing: 16) {
+                                Image(systemName: "checkmark.circle")
+                                    .font(.system(size: 60))
+                                    .foregroundColor(.blue.opacity(0.6))
                                 
-                                Text(activity.activityDescription ?? "Unknown Activity")
-                                    .strikethrough(activity.isCompleted)
-                                    .foregroundColor(activity.isCompleted ? .secondary : .primary)
-                                    .onTapGesture {
+                                Text("No activities for today")
+                                    .font(.title2)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primary)
+                                
+                                Text("Add your first activity to get started!")
+                                    .font(.body)
+                                    .foregroundColor(.secondary)
+                                
+                                Button("Add Activity") {
+                                    showingAddActivity = true
+                                }
+                                .glassButton()
+                                .foregroundColor(.white)
+                            }
+                        }
+                        .padding()
+                        Spacer()
+                    }
+                } else {
+                    ScrollView {
+                        VStack(spacing: 12) {
+                            ForEach(todaysActivities) { activity in
+                                GlassContainer(cornerRadius: 16, padding: 16) {
+                                    HStack {
+                                        Button(action: {
+                                            toggleActivityCompletion(activity)
+                                        }) {
+                                            Image(systemName: activity.isCompleted ? "checkmark.circle.fill" : "circle")
+                                                .foregroundColor(activity.isCompleted ? .green : .gray)
+                                                .font(.title2)
+                                        }
+                                        .buttonStyle(PlainButtonStyle())
+                                        
+                                        Text(activity.activityDescription ?? "Unknown Activity")
+                                            .strikethrough(activity.isCompleted)
+                                            .foregroundColor(activity.isCompleted ? .secondary : .primary)
+                                            .onTapGesture {
+                                                editingActivity = activity
+                                            }
+                                        
+                                        Spacer()
+                                    }
+                                }
+                                .contextMenu {
+                                    Button("Edit") {
                                         editingActivity = activity
                                     }
-                                
-                                Spacer()
-                            }
-                            .padding(.vertical, 4)
-                            .contextMenu {
-                                Button("Edit") {
-                                    editingActivity = activity
-                                }
-                                Button("Delete", role: .destructive) {
-                                    deleteActivity(activity)
+                                    Button("Delete", role: .destructive) {
+                                        deleteActivity(activity)
+                                    }
                                 }
                             }
                         }
-                        .onDelete(perform: deleteActivities)
+                        .padding()
                     }
                 }
             }
@@ -115,12 +138,6 @@ struct TodayView: View {
                         }) {
                             Label("Add Activity", systemImage: "plus")
                         }
-                    }
-                }
-                
-                if !todaysActivities.isEmpty {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        EditButton()
                     }
                 }
             }
@@ -208,23 +225,41 @@ struct EditActivityView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
-                Text("Edit Activity")
-                    .font(.title2)
-                    .fontWeight(.semibold)
+            ZStack {
+                // Gradient background
+                LinearGradient(
+                    colors: [
+                        Color.blue.opacity(0.1),
+                        Color.purple.opacity(0.1),
+                        Color.pink.opacity(0.05)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
-                TextField("What do you want to do?", text: $activityText)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .submitLabel(.done)
-                    .onSubmit {
-                        if !activityText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            saveChanges()
+                VStack(spacing: 20) {
+                    GlassContainer(cornerRadius: 20, padding: 24) {
+                        VStack(spacing: 16) {
+                            Text("Edit Activity")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                            
+                            TextField("What do you want to do?", text: $activityText)
+                                .glassTextField()
+                                .submitLabel(.done)
+                                .onSubmit {
+                                    if !activityText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                        saveChanges()
+                                    }
+                                }
                         }
                     }
-                
-                Spacer()
+                    .padding()
+                    
+                    Spacer()
+                }
             }
-            .padding()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -238,6 +273,8 @@ struct EditActivityView: View {
                         saveChanges()
                     }
                     .disabled(activityText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .glassButton(isEnabled: !activityText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .foregroundColor(.white)
                 }
             }
             .onAppear {
@@ -268,23 +305,41 @@ struct AddActivityView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
-                Text("Add New Activity")
-                    .font(.title2)
-                    .fontWeight(.semibold)
+            ZStack {
+                // Gradient background
+                LinearGradient(
+                    colors: [
+                        Color.blue.opacity(0.1),
+                        Color.purple.opacity(0.1),
+                        Color.pink.opacity(0.05)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
-                TextField("What do you want to do?", text: $activityText)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .submitLabel(.done)
-                    .onSubmit {
-                        if !activityText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            addActivity()
+                VStack(spacing: 20) {
+                    GlassContainer(cornerRadius: 20, padding: 24) {
+                        VStack(spacing: 16) {
+                            Text("Add New Activity")
+                                .font(.title2)
+                                .fontWeight(.semibold)
+                            
+                            TextField("What do you want to do?", text: $activityText)
+                                .glassTextField()
+                                .submitLabel(.done)
+                                .onSubmit {
+                                    if !activityText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                        addActivity()
+                                    }
+                                }
                         }
                     }
-                
-                Spacer()
+                    .padding()
+                    
+                    Spacer()
+                }
             }
-            .padding()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -298,6 +353,8 @@ struct AddActivityView: View {
                         addActivity()
                     }
                     .disabled(activityText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .glassButton(isEnabled: !activityText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .foregroundColor(.white)
                 }
             }
         }

@@ -29,49 +29,69 @@ struct HistoryView: View {
     
     var body: some View {
         NavigationView {
-            List {
-                ForEach(activitiesByDate, id: \.0) { date, activities in
-                    NavigationLink(destination: DayDetailView(date: date, activities: activities)) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(formatDate(date))
-                                    .font(.headline)
-                                
-                                Text("\(activities.count) activities")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing, spacing: 4) {
-                                HStack(spacing: 8) {
-                                    // Completed count
-                                    HStack(spacing: 2) {
-                                        Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(.green)
-                                            .font(.caption)
-                                        Text("\(activities.filter { $0.isCompleted }.count)")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    
-                                    // Archived count
-                                    if activities.contains(where: { $0.isArchived }) {
-                                        HStack(spacing: 2) {
-                                            Image(systemName: "archivebox.fill")
-                                                .foregroundColor(.orange)
-                                                .font(.caption)
-                                            Text("\(activities.filter { $0.isArchived }.count)")
+            ZStack {
+                // Gradient background
+                LinearGradient(
+                    colors: [
+                        Color.blue.opacity(0.1),
+                        Color.purple.opacity(0.1),
+                        Color.pink.opacity(0.05)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(activitiesByDate, id: \.0) { date, activities in
+                            NavigationLink(destination: DayDetailView(date: date, activities: activities)) {
+                                GlassContainer(cornerRadius: 16, padding: 16) {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(formatDate(date))
+                                                .font(.headline)
+                                                .fontWeight(.semibold)
+                                            
+                                            Text("\(activities.count) activities")
                                                 .font(.caption)
                                                 .foregroundColor(.secondary)
+                                        }
+                                        
+                                        Spacer()
+                                        
+                                        VStack(alignment: .trailing, spacing: 4) {
+                                            HStack(spacing: 8) {
+                                                // Completed count
+                                                HStack(spacing: 2) {
+                                                    Image(systemName: "checkmark.circle.fill")
+                                                        .foregroundColor(.green)
+                                                        .font(.caption)
+                                                    Text("\(activities.filter { $0.isCompleted }.count)")
+                                                        .font(.caption)
+                                                        .foregroundColor(.secondary)
+                                                }
+                                                
+                                                // Archived count
+                                                if activities.contains(where: { $0.isArchived }) {
+                                                    HStack(spacing: 2) {
+                                                        Image(systemName: "archivebox.fill")
+                                                            .foregroundColor(.orange)
+                                                            .font(.caption)
+                                                        Text("\(activities.filter { $0.isArchived }.count)")
+                                                            .font(.caption)
+                                                            .foregroundColor(.secondary)
+                                                    }
+                                                }
+                                            }
                                         }
                                     }
                                 }
                             }
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .padding(.vertical, 4)
                     }
+                    .padding()
                 }
             }
             .navigationTitle("History")
@@ -114,29 +134,64 @@ struct DayDetailView: View {
     }
     
     var body: some View {
-        List {
-            if !incompleteActivities.isEmpty {
-                Section("Incomplete") {
-                    ForEach(incompleteActivities, id: \.self) { activity in
-                        ActivityRowView(activity: activity, showCheckbox: false)
-                    }
-                }
-            }
+        ZStack {
+            // Gradient background
+            LinearGradient(
+                colors: [
+                    Color.blue.opacity(0.1),
+                    Color.purple.opacity(0.1),
+                    Color.pink.opacity(0.05)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             
-            if !completedActivities.isEmpty {
-                Section("Completed") {
-                    ForEach(completedActivities, id: \.self) { activity in
-                        ActivityRowView(activity: activity, showCheckbox: false)
+            ScrollView {
+                VStack(spacing: 16) {
+                    if !incompleteActivities.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Incomplete")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .padding(.horizontal)
+                            
+                            ForEach(incompleteActivities, id: \.self) { activity in
+                                ActivityRowView(activity: activity, showCheckbox: false)
+                                    .padding(.horizontal)
+                            }
+                        }
+                    }
+                    
+                    if !completedActivities.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Completed")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .padding(.horizontal)
+                            
+                            ForEach(completedActivities, id: \.self) { activity in
+                                ActivityRowView(activity: activity, showCheckbox: false)
+                                    .padding(.horizontal)
+                            }
+                        }
+                    }
+                    
+                    if !archivedActivities.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Cleared")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .padding(.horizontal)
+                            
+                            ForEach(archivedActivities, id: \.self) { activity in
+                                ActivityRowView(activity: activity, showCheckbox: false)
+                                    .padding(.horizontal)
+                            }
+                        }
                     }
                 }
-            }
-            
-            if !archivedActivities.isEmpty {
-                Section("Cleared") {
-                    ForEach(archivedActivities, id: \.self) { activity in
-                        ActivityRowView(activity: activity, showCheckbox: false)
-                    }
-                }
+                .padding(.vertical)
             }
         }
         .navigationTitle(formatDateTitle(date))
@@ -163,32 +218,33 @@ struct ActivityRowView: View {
     let showCheckbox: Bool
     
     var body: some View {
-        HStack {
-            if showCheckbox {
-                Image(systemName: activity.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(activity.isCompleted ? .green : .gray)
-                    .font(.title2)
-            } else {
-                Image(systemName: getStatusIcon())
-                    .foregroundColor(getStatusColor())
-                    .font(.title2)
-            }
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(activity.activityDescription ?? "Unknown Activity")
-                    .strikethrough(activity.isCompleted || activity.isArchived)
-                    .foregroundColor(getTextColor())
-                
-                if let completedDate = activity.completedDate {
-                    Text("Completed at \(formatTime(completedDate))")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+        GlassContainer(cornerRadius: 16, padding: 16) {
+            HStack {
+                if showCheckbox {
+                    Image(systemName: activity.isCompleted ? "checkmark.circle.fill" : "circle")
+                        .foregroundColor(activity.isCompleted ? .green : .gray)
+                        .font(.title2)
+                } else {
+                    Image(systemName: getStatusIcon())
+                        .foregroundColor(getStatusColor())
+                        .font(.title2)
                 }
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(activity.activityDescription ?? "Unknown Activity")
+                        .strikethrough(activity.isCompleted || activity.isArchived)
+                        .foregroundColor(getTextColor())
+                    
+                    if let completedDate = activity.completedDate {
+                        Text("Completed at \(formatTime(completedDate))")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                
+                Spacer()
             }
-            
-            Spacer()
         }
-        .padding(.vertical, 4)
     }
     
     private func getStatusIcon() -> String {
